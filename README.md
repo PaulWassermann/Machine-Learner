@@ -10,6 +10,7 @@ This Python module aims to implement from scratch well-known machine learning co
 * [Setup](#setup)
 
 
+
 ## General info
 
 As the name of the module indicates, it serves as learning tool for me, both regarding the implementation and the 
@@ -22,3 +23,4 @@ The module is developed with Python 3.10 and mainly revolves around the numpy mo
 It also uses matplotlib 3.5.0 for plots.
 
 ## Setup
+
