@@ -19,7 +19,8 @@ class Optimizer(ABC):
     @abstractmethod
     def optimize(self,
                  a: NDArray[npNumber],
-                 b: NDArray[npNumber]) -> NDArray[npNumber]:
+                 b: NDArray[npNumber],
+                 **kwargs) -> NDArray[npNumber]:
         ...
 
 
@@ -34,12 +35,14 @@ class SGD(Optimizer):
 
     def optimize(self,
                  x: NDArray[npNumber],
-                 loss_gradient: NDArray[npNumber]) -> NDArray[npNumber]:
+                 loss_gradient: NDArray[npNumber],
+                 **kwargs) -> NDArray[npNumber]:
         """
         This method performs a regular gradient descent.
 
         :param x: an array of arrays that is to be optimized (the weight matrix, the bias vector, ...)
         :param loss_gradient: the gradient of the neural network loss function with respect to the w parameter
+        :param kwargs: no use
         :return: the updated value of the x parameter
         """
 
@@ -57,23 +60,24 @@ class AdaGrad(Optimizer):
 
     def optimize(self,
                  x: NDArray[npNumber],
-                 accumulated_gradients: NDArray[npNumber]) -> NDArray[npNumber]:
+                 loss_gradient: NDArray[npNumber],
+                 **kwargs) -> NDArray[npNumber]:
         """
         This method computes an adapted learning rate based on the value of previous gradient values.
 
         :param x: an array of arrays that is to be optimized (the weight matrix, the bias vector, ...)
-        :param accumulated_gradients: an array containing the gradients computed at previous timesteps
+        :param loss_gradient: the gradient of the neural network loss function with respect to the w parameter
+        :param kwargs:
+        - accumulated_gradients: an array the same shape as loss_gradient containing squared gradients from previous
+        timesteps
         :return: the updated value of the x parameter
         """
 
-        gradient = accumulated_gradients[-1]
+        accumulated_gradients = kwargs.get("accumulated_gradients")
 
-        g = np.sum(accumulated_gradients ** 2, axis=0)
+        adjusted_learning_rate = np.divide(self.learning_rate, np.sqrt(accumulated_gradients + self.epsilon))
 
-        diag_g = np.diag(g)[:, np.newaxis]
-
-        return (1 - self.learning_rate * self.regularization_rate) * x \
-            - self.learning_rate * gradient / (np.sqrt(diag_g + self.epsilon))
+        return (1 - self.learning_rate * self.regularization_rate) * x - adjusted_learning_rate * loss_gradient
 
 
 optimizers = {

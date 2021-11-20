@@ -30,12 +30,13 @@ class Dense(Layer):
         self.weights_gradient: NDArray[Number] = np.array([])
         self.biases_gradient: NDArray[Number] = np.array([])
 
-        self.weights_gradients_acc: list[NDArray[Number]] = []
-        self.biases_gradients_acc: list[NDArray[Number]] = []
-        self.accumulator_size: int = 20
+        self.weights_gradients_acc: NDArray[Number] = []
+        self.biases_gradients_acc: NDArray[Number] = []
 
         self.activation_function: ActivationFunction = \
             activation_functions[kwargs.get("activation function", "sigmoid")]
+
+        self.is_output = kwargs.get("last layer", True)
 
         if self.input_neurons != 0:
             self.init_architecture(self.input_neurons)
@@ -70,21 +71,19 @@ class Dense(Layer):
 
         # start = perf_counter()
 
-        propagated_error = self.activation_function.compute_derivative(self.z) * err_from_next_layer
+        if self.is_output and self.activation_function.name == "softmax":
+            propagated_error = err_from_next_layer
+
+        else:
+            propagated_error = self.activation_function.compute_derivative(self.z) * err_from_next_layer
 
         self.weights_gradient = np.mean(propagated_error @ np.transpose(self.x, axes=[0, 2, 1]), axis=0)
-        self.weights_gradients_acc.append(self.weights_gradient)
-        # self.weights_gradients_acc = np.append(self.weights_gradients_acc, self.weights_gradient[np.newaxis, ...],
-        #                                        axis=0)
-        if len(self.weights_gradients_acc) > self.accumulator_size:
-            self.weights_gradients_acc.pop(0)
 
-        self.biases_gradient = np.mean(propagated_error, axis=0)
-        self.biases_gradients_acc.append(self.biases_gradient)
-        # self.biases_gradients_acc = np.append(self.biases_gradients_acc, self.biases_gradient[np.newaxis, ...],
-        #                                       axis=0)
-        if len(self.biases_gradients_acc) > self.accumulator_size:
-            self.biases_gradients_acc.pop(0)
+        if propagated_error.ndim == 2:
+            self.biases_gradient = propagated_error
+
+        else:
+            self.biases_gradient = np.mean(propagated_error, axis=0)
 
         # print(f"Backward propagation execution time: {(perf_counter() - start)*100:.2f}ms")
 
@@ -104,7 +103,10 @@ class Dense(Layer):
             self.weights = optimizer.optimize(self.weights, self.weights_gradient)
 
         elif optimizer.name == "adagrad":
-            self.weights = optimizer.optimize(self.weights, np.array(self.weights_gradients_acc))
+            self.weights_gradients_acc += self.weights_gradient ** 2
+            self.weights = optimizer.optimize(self.weights,
+                                              self.weights_gradient,
+                                              accumulated_gradients=self.weights_gradients_acc)
 
         # print(f"Weights update execution time: {(perf_counter() - start)*100:.2f}ms")
 
@@ -122,7 +124,10 @@ class Dense(Layer):
             self.biases = optimizer.optimize(self.biases, self.biases_gradient)
 
         elif optimizer.name == "adagrad":
-            self.biases = optimizer.optimize(self.biases, np.array(self.biases_gradients_acc))
+            self.biases_gradients_acc += self.biases_gradient ** 2
+            self.biases = optimizer.optimize(self.biases,
+                                             self.biases_gradient,
+                                             accumulated_gradients=self.biases_gradients_acc)
 
         self.biases_gradient = np.zeros(self.biases.shape)
 
@@ -146,11 +151,8 @@ class Dense(Layer):
         self.weights_gradient = np.zeros(self.weights.shape)
         self.biases_gradient = np.zeros(self.biases.shape)
 
-        # self.weights_gradients_acc = np.zeros((1, *self.weights.shape))
-        # self.biases_gradients_acc = np.zeros((1, *self.biases.shape))
-
-        self.weights_gradients_acc = []
-        self.biases_gradients_acc = []
+        self.weights_gradients_acc = np.zeros(self.weights_gradient.shape)
+        self.biases_gradients_acc = np.zeros(self.biases_gradient.shape)
 
     def init_weights(self) -> None:
         """
@@ -161,6 +163,7 @@ class Dense(Layer):
 
         :return: None
         """
+
         self.weights = np.random.sample((self.output_neurons, self.input_neurons)) * 2 - 1
 
         r = math.sqrt(6 / (self.input_neurons + self.output_neurons))

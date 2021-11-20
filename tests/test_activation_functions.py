@@ -62,12 +62,8 @@ def test_softmax():
     x_random = sample((10, 784, 1)) * 2 - 1
     y_2d_array = Softmax.compute(x_2d_array)
     y_3d_array = Softmax.compute(x_3d_array)
-    yp_2d_array = Softmax.compute_derivative(x_2d_array)
-    yp_3d_array = Softmax.compute_derivative(x_3d_array)
     y_random = Softmax.compute(x_random)
 
     assert_almost_equal(y_2d_array, np.array([[[0.5], [0.5]]]))
     assert_almost_equal(y_3d_array, np.array([[[0.5], [0.5]], [[0.5], [0.5]]]))
-    # assert_almost_equal(yp_2d_array, np.array([[0], [0.25]]))
-    # assert_almost_equal(yp_3d_array, np.array([[[0], [0.25]]]))
     assert_almost_equal(np.sum(y_random, axis=1), np.ones((10, 1)))

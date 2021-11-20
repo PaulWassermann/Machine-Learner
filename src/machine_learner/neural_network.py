@@ -1,4 +1,4 @@
-from machine_learner.cost_functions import MeanSquaredError
+from machine_learner.loss_functions import loss_functions
 from machine_learner.optimizers import optimizers
 from machine_learner.layers.dense import Dense
 
@@ -6,6 +6,7 @@ import numpy as np
 from pickle import dump
 from pathlib import Path
 from time import perf_counter
+import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 from machine_learner.utils import shuffle_together
 from machine_learner.type_stubs import Number, npNumber, Architecture, Layer
@@ -16,7 +17,7 @@ class NeuralNetwork:
     def __init__(self,
                  architecture: Architecture = None,
                  optimizer: str = "sgd",
-                 cost_function=MeanSquaredError) -> None:
+                 loss_function: str = "mse") -> None:
 
         # ----- CLASSIFICATION ATTRIBUTES -----
         self.input = None
@@ -25,18 +26,18 @@ class NeuralNetwork:
         self.classes: dict[int, str] = {}
 
         # ----- HYPER-PARAMETERS -----
-        self.batch_size: int = 50
+        self.batch_size: int = 64
         self.number_of_epochs: int = 5
         self.optimizer = optimizers[optimizer]()
-        self.cost_function = cost_function
+        self.loss_function = loss_functions[loss_function]
 
         self.initialize_architecture(architecture)
 
     def train(self,
               x: NDArray[npNumber],
               y: NDArray[npNumber],
-              validation_data: np.ndarray = None,
-              validation_data_labels: np.ndarray = None,
+              validation_data: NDArray[npNumber] = None,
+              validation_data_labels: NDArray[npNumber] = None,
               learning_rate: Number = None,
               **kwargs) -> None:
         """
@@ -52,7 +53,10 @@ class NeuralNetwork:
         :param learning_rate: a float used to define the learning rate of the optimizer
         :param kwargs: a dictionary of optional parameters. Accepted keys are:
         - epochs: redefine the number of epochs for the network to be trained on
-        - batch size: redefine the size of the batches use for training
+        - batch_size: redefine the size of the batches use for training
+        - validation_split: if no validation data is provided, indicates the percentage of the training data kept for
+        validation
+        - plot_session: if True, validation accuracy and loss are plotted while the network learns
         :return: None
         """
 
@@ -60,12 +64,14 @@ class NeuralNetwork:
         self.number_of_epochs = kwargs.get("epochs", self.number_of_epochs)
         self.batch_size = kwargs.get("batch_size", self.batch_size)
         validation_split = kwargs.get("validation_split", 0.1)
+        plot_session = kwargs.get("plot_session", False)
 
         # Shuffling the training data
         x, y = shuffle_together(x, y)
 
         # If no validation dataset is passed as an argument, we make one from the training dataset
         if validation_data is None:
+            print("Aïe")
             validation_data_size = x.shape[0] // int(1 / validation_split)
             validation_data = x[:validation_data_size]
             validation_data_labels = y[:validation_data_size]
@@ -80,10 +86,41 @@ class NeuralNetwork:
         if self.layers[-1].output_neurons != y.shape[1]:
             self.layers[-1].output_neurons = y.shape[1]
 
+        if plot_session:
+            epochs = []
+            validation_accuracies = []
+            losses = []
+
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+
+            ax1.set(title="Validation accuracy across epochs",
+                    xlabel="Epochs",
+                    ylabel="Validation accuracy (%)",
+                    xlim=[0, self.number_of_epochs],
+                    ylim=[0, 100])
+
+            ax2.set(title="Loss across epochs",
+                    xlabel="Epochs",
+                    ylabel="Loss",
+                    xlim=[0, self.number_of_epochs])
+
+            ax2.set_ylim(bottom=0)
+
+            line1, = ax1.plot(epochs, validation_accuracies, animated=True)
+            line2, = ax2.plot(epochs, losses, animated=True)
+
+            plt.show(block=False)
+
+            plt.pause(0.5)
+
+            bg = fig.canvas.copy_from_bbox(fig.bbox)
+
+            fig.canvas.blit(fig.bbox)
+
         # Looping over the training data set
         for epoch in range(self.number_of_epochs):
 
-            print(f"\n--- Epoch: {epoch + 1} ---\n")
+            print(f"\n--- Epoch: {epoch + 1} / {self.number_of_epochs}---\n")
             print("Progress:")
 
             # Generate new batches for this epoch
@@ -107,14 +144,42 @@ class NeuralNetwork:
                 # Finally, we update the weights and biases of the network
                 self.update_parameters()
 
+                if len(timings) == 1000:
+                    timings.pop(0)
+
                 timings.append(perf_counter() - start)
 
                 if (batch % max(1, ((x.shape[0] // self.batch_size) // 10))) == 0 \
                         or batch == max(1, (x.shape[0] // self.batch_size)) - 1:
+
+                    validation_accuracy = 100 * self.evaluate(validation_data, validation_data_labels)
+                    loss = abs(self.loss_function.compute(y_estimated, y_batch))
+
+                    if plot_session:
+                        epochs.append(epoch + batch / (x.shape[0] // self.batch_size))
+                        validation_accuracies.append(validation_accuracy)
+                        losses.append(loss)
+
+                        fig.canvas.restore_region(bg)
+
+                        ax2.set_ylim(top=max(losses))
+                        plt.pause(0.3)
+
+                        line1.set_data(epochs, validation_accuracies)
+                        line2.set_data(epochs, losses)
+
+                        ax1.draw_artist(line1)
+                        ax2.draw_artist(line2)
+
+                        fig.canvas.blit(fig.bbox)
+
+                        fig.canvas.flush_events()
+
                     # Monitoring training session
                     print(f"Batch {batch + 1} / {x.shape[0] // self.batch_size}, "
                           f"accuracy: {100 * self.evaluate(x, y):.2f}%, "
-                          f"validation accuracy: {100 * self.evaluate(validation_data, validation_data_labels):.2f}%, "
+                          f"validation accuracy: {validation_accuracy:.2f}%, "
+                          f"loss for last batch: {loss:.2f}, "
                           f"mean execution time per batch: {1000 * np.mean(timings):.2f} ms",
                           end="\r")
 
@@ -164,7 +229,7 @@ class NeuralNetwork:
         :return: None
         """
 
-        error_to_propagate = self.cost_function.compute_derivative(y, expected_output)
+        error_to_propagate = self.loss_function.compute_derivative(y, expected_output)
 
         for layer in self.layers[::-1]:
             error_to_propagate = layer.propagate_backwards(error_to_propagate)
@@ -192,7 +257,7 @@ class NeuralNetwork:
 
         return np.sum(np.argmax(self.inference(x), axis=1) == np.argmax(y, axis=1)) / x.shape[0]
 
-    def decide(self, x: NDArray[npNumber]) -> NDArray[npNumber]:
+    def predict(self, x: NDArray[npNumber]) -> NDArray[npNumber]:
         """
         Computes the output for each input vector of the x parameter and returns what class each of the input vectors
         was assigned to only if the "classes" key was included in the architecture provided.
@@ -227,7 +292,8 @@ class NeuralNetwork:
         """
 
         last_layer = {
-            # "activation function": "softmax"
+            "activation function": "softmax",
+            "last layer": True
         }
 
         if (classes := architecture.get("classes", None)) is not None:
@@ -260,7 +326,7 @@ class NeuralNetwork:
         path_ = Path(__file__).parent.joinpath(path).with_suffix(".ai")
 
         while path_.exists():
-            path_ = path_.with_stem(f"{path_}_{count}")
+            path_ = path_.with_stem(f"{path_.stem}_{count}")
             count += 1
 
         with path_.open(mode='wb') as dump_file:

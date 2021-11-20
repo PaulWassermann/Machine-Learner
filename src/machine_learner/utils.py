@@ -36,7 +36,7 @@ def shuffle_together(x: NDArray[npNumber],
 
     :param x: an array to be shuffled
     :param y: an other array to be shuffled
-    :return: a couple of arrays created from input arrars but shuffled in the same manner
+    :return: a couple of arrays created from input arrays but shuffled in the same manner
     """
     indices = np.arange(0, x.shape[0], 1)
     np.random.shuffle(indices)

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class Layer(ABC):
 
     def __init__(self, **kwargs):
-        pass
+        self.is_output = False
 
     @abstractmethod
     def propagate_forward(self, x):

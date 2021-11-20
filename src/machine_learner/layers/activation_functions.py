@@ -72,12 +72,14 @@ class Softmax:
 
         # We perform a shift in the values to prevent unstable behavior due to the use of np.exp
         maxima = np.max(x, axis=1, keepdims=True)
+
         x -= maxima
 
         return np.exp(x) / np.sum(np.exp(x), axis=1, keepdims=True)
 
     @staticmethod
     def compute_derivative(x: NDArray[npNumber]) -> NDArray[npNumber]:
+
         return np.apply_along_axis(lambda x_i: (np.diagflat(x_i) - x_i * x_i.T), axis=0, arr=Softmax.compute(x))
 
 
