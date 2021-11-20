@@ -3,8 +3,7 @@
 # Machine-Learner
 
 This Python module aims to implement from scratch well-known machine learning concepts and techniques. 
-The machine_learner module can be used to create model
-realizing classification tasks.
+The machine_learner module can be used to create models which can perform classification tasks.
  
 
 ## Table of contents
@@ -83,9 +82,10 @@ print("\nAccuracy on test dataset:"
 ## Features
 <ul>
 <li>Define easily a sequential architecture</li>
-
+</br>
 Note: since the code runs on CPU, I only implemented fully-connected layers 
 and I advise not using more than 3 layers (output layer excluded)
+ 
 ```python
 # This model defines a 3 layer architecture
 # The output layer is automatically generated with a softmax activation function
@@ -115,14 +115,14 @@ architecture = {
 ```
 
 <li>Choose an otpimizer as well as a loss function</li>
-
+</br>
 You can choose between two optimizers:
 
 <ul>
 <li>Stochastic Gradient Descent</li>
 <li>Adaptative Gradient Descent</li>
 </ul>
-
+</br>
 and two loss functions:
 <ul>
 <li>Mean Squared Error</li>
@@ -140,7 +140,7 @@ neural_network2 = NeuralNetwork(architecture,
 ```
 
 <li>Customize the training of the neural network</li>
-
+</br>
 If you have a validation dataset, you can provide it to the network when calling 
 its ``train`` method. Else, the training dataset will be automatically split to build a 
 validation dataset.
@@ -162,7 +162,7 @@ neural_network.train(training_examples,
 ```
 
 <li>You can save and load trained models </li>
-
+</br>
 You can save and load networks to and from binary files.
 
 Note: be careful when using the load function, it can load any binary file, ensure that the
