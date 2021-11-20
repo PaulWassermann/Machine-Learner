@@ -186,10 +186,10 @@ images representing numbers between 0 and 9.
 
 The MNIST fashion dataset comes with separate training and test datasets. It consists of 28x28 gray images representing 10 categories of 
 clothes. This classification task is more complex than that of the standard MNIST dataset, especially because of the high intra-class variance.
+</ul>
 
 ## More info
 
 From my experimentations, setting the batch size between 2 and 16 and the learning rate between 0.1 and 0.01 will 
 lead to fast, efficient learning. 
 
-</ul>
