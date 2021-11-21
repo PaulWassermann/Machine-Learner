@@ -117,6 +117,8 @@ class NeuralNetwork:
 
             fig.canvas.blit(fig.bbox)
 
+        train_start = perf_counter()
+
         # Looping over the training data set
         for epoch in range(self.number_of_epochs):
 
@@ -130,7 +132,7 @@ class NeuralNetwork:
 
             for batch in range(x.shape[0] // self.batch_size):
 
-                start = perf_counter()
+                batch_start = perf_counter()
 
                 # First, we get the batches for the network to be trained on
                 x_batch, y_batch = next(batches)
@@ -147,7 +149,7 @@ class NeuralNetwork:
                 if len(timings) == 1000:
                     timings.pop(0)
 
-                timings.append(perf_counter() - start)
+                timings.append(perf_counter() - batch_start)
 
                 if (batch % max(1, ((x.shape[0] // self.batch_size) // 10))) == 0 \
                         or batch == max(1, (x.shape[0] // self.batch_size)) - 1:
@@ -183,7 +185,9 @@ class NeuralNetwork:
                           f"mean execution time per batch: {1000 * np.mean(timings):.2f} ms",
                           end="\r")
 
-            print("\n", end="")
+            print("\n")
+
+        print(f"Total training time: {(perf_counter() - train_start):.2f} seconds")
 
     def generate_batches(self,
                          x: NDArray[npNumber],
@@ -323,7 +327,7 @@ class NeuralNetwork:
 
         count = 1
 
-        path_ = Path(__file__).parent.joinpath(path).with_suffix(".ai")
+        path_ = Path().cwd().joinpath(path).with_suffix(".ai")
 
         while path_.exists():
             path_ = path_.with_stem(f"{path_.stem}_{count}")
@@ -331,3 +335,4 @@ class NeuralNetwork:
 
         with path_.open(mode='wb') as dump_file:
             dump(file=dump_file, obj=self)
+            print(f"Model {path_.stem} was saved successfully.")

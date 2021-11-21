@@ -53,7 +53,7 @@ def load_network(path: str) -> Union[Any, NeuralNetwork]:
     :return: the NeuralNetwork instance stored in the file found at "path"
     """
 
-    path_ = Path(__file__).parent.joinpath(path).with_suffix(".ai")
+    path_ = Path().cwd().joinpath(path).with_suffix(".ai")
 
     with path_.open('rb') as file:
         return load(file)

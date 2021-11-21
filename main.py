@@ -35,20 +35,19 @@ neural_network.train(training_examples,
                      validation_data=validation_examples[:1000],
                      validation_data_labels=validation_labels[:1000],
                      learning_rate=0.01,
-                     epochs=4,
-                     batch_size=2,
-                     plot_session=False)
+                     epochs=3,
+                     batch_size=5)
+
+print(f"\nAccuracy on test dataset: {neural_network.evaluate(test_examples, test_labels) * 100:.2f}%\n")
 
 # This line saves the neural network as a binary file, at the indicated path
-# neural_network.save(path="my_model")
+neural_network.save(path="my_model")
 
 # This line loads a neural network saved as a binary file, at the indicated path
 # neural_network = load_network("my_model")
 
-print(f"\nAccuracy on test dataset: {neural_network.evaluate(test_examples, test_labels) * 100:.2f}%")
+# plt.imshow(np.reshape(test_examples[10], (28, 28)), cmap="gray")
 
-plt.imshow(np.reshape(test_examples[10], (28, 28)), cmap="gray")
+# plt.show()
 
-plt.show()
-
-print(neural_network.predict(test_examples[10]))
+# print(neural_network.predict(test_examples[10]))
