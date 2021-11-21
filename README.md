@@ -76,9 +76,11 @@ neural_network = NeuralNetwork(architecture)
 neural_network.train(training_examples, training_labels)
 
 # Test the model on the test dataset
-print("\nAccuracy on test dataset:" 
-      f"{neural_network.evaluate(test_examples, test_labels) * 100:.2f}%")
+print(f"\nAccuracy on test dataset:{neural_network.evaluate(test_examples, test_labels) * 100:.2f}%")
 ```
+
+Note: you have to run your script from command line using ``python <your script>`` in order to visualize the training progress (it won't work if the 
+script is executed from a PyCharm configuration).
 
 ## Features
 <ul>
@@ -131,13 +133,9 @@ and two loss functions:
 </ul>
 
 ```python
-neural_network = NeuralNetwork(architecture, 
-                               optimizer="sgd", 
-                               loss_function="mse")
+neural_network = NeuralNetwork(architecture, optimizer="sgd", loss_function="mse")
 
-neural_network2 = NeuralNetwork(architecture, 
-                                optimizer="adagrad", 
-                                loss_function="cross_entropy")
+neural_network2 = NeuralNetwork(architecture, optimizer="adagrad", loss_function="cross_entropy")
 ```
 
 <li>Customize the training of the neural network</li>
