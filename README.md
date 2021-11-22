@@ -13,6 +13,7 @@ The machine_learner module can be used to create models which can perform classi
 * [Setup](#setup)
 * [Usage](#usage)
 * [Features](#features)
+* [More info](#more-info)
 
 
 ## General info
@@ -75,9 +76,11 @@ neural_network = NeuralNetwork(architecture)
 neural_network.train(training_examples, training_labels)
 
 # Test the model on the test dataset
-print("\nAccuracy on test dataset:" 
-      f"{neural_network.evaluate(test_examples, test_labels) * 100:.2f}%")
+print(f"\nAccuracy on test dataset:{neural_network.evaluate(test_examples, test_labels) * 100:.2f}%")
 ```
+
+Note: you have to run your script from command line using ``python <your script>`` in order to visualize the training progress (it won't work if the 
+script is executed from a PyCharm configuration).
 
 ## Features
 <ul>
@@ -130,13 +133,9 @@ and two loss functions:
 </ul>
 
 ```python
-neural_network = NeuralNetwork(architecture, 
-                               optimizer="sgd", 
-                               loss_function="mse")
+neural_network = NeuralNetwork(architecture, optimizer="sgd", loss_function="mse")
 
-neural_network2 = NeuralNetwork(architecture, 
-                                optimizer="adagrad", 
-                                loss_function="cross_entropy")
+neural_network2 = NeuralNetwork(architecture, optimizer="adagrad", loss_function="cross_entropy")
 ```
 
 <li>Customize the training of the neural network</li>
@@ -176,4 +175,19 @@ neural_network.save("my_model")
 neural_network = load_network("my_model")
 ```
 
+<li>Included datasets</li>
+</br>
+Two datasets are shipped with the package: the MNIST dataset and the MNIST fashion dataset.
+
+The MNIST dataset comes with separate training, validation and test datasets. It consists of 28x28 gray (1 channel for color information) 
+images representing numbers between 0 and 9.
+
+The MNIST fashion dataset comes with separate training and test datasets. It consists of 28x28 gray images representing 10 categories of 
+clothes. This classification task is more complex than that of the standard MNIST dataset, especially because of the high intra-class variance.
 </ul>
+
+## More info
+
+From my experimentations, setting the batch size between 2 and 16 and the learning rate between 0.1 and 0.01 will 
+lead to fast, efficient learning. 
+
