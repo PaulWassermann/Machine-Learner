@@ -329,8 +329,10 @@ class NeuralNetwork:
 
         path_ = Path().cwd().joinpath(path).with_suffix(".ai")
 
+        base_stem = path_.stem
+
         while path_.exists():
-            path_ = path_.with_stem(f"{path_.stem}_{count}")
+            path_ = path_.with_stem(f"{base_stem}_{count}")
             count += 1
 
         with path_.open(mode='wb') as dump_file:

@@ -27,7 +27,7 @@ architecture = {
 }
 
 # Creates the NeuralNetwork instance
-neural_network = NeuralNetwork(architecture=architecture, optimizer="sgd", loss_function="mse")
+neural_network = NeuralNetwork(architecture=architecture, optimizer="adagrad", loss_function="cross_entropy")
 
 # Train the network
 neural_network.train(training_examples,
@@ -35,7 +35,7 @@ neural_network.train(training_examples,
                      validation_data=validation_examples[:1000],
                      validation_data_labels=validation_labels[:1000],
                      learning_rate=0.01,
-                     epochs=3,
+                     epochs=2,
                      batch_size=5)
 
 print(f"\nAccuracy on test dataset: {neural_network.evaluate(test_examples, test_labels) * 100:.2f}%\n")
