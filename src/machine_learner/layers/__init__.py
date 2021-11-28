@@ -1,4 +1,4 @@
-from ..layers.activation_functions import activation_functions as activation_functions
+from ..layers.activation_functions import ActivationFunctionFactory as ActivationFunctionFactory
 from ..layers.activation_functions import ActivationFunction as ActivationFunction
 from ..layers.activation_functions import HyperbolicTangent as HyperbolicTangent
 from ..layers.activation_functions import Sigmoid as Sigmoid
@@ -7,7 +7,7 @@ from ..layers.activation_functions import ReLU as RelU
 from ..layers.layer import Layer
 
 __all__ = [
-    "activation_functions",
+    "ActivationFunctionFactory",
     "ActivationFunction",
     "HyperbolicTangent",
     "Sigmoid",

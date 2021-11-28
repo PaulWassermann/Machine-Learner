@@ -3,6 +3,7 @@ from typing import Union
 from .type_stubs import Number
 from numpy.typing import NDArray
 from abc import ABC, abstractmethod
+from .extras.factory import BaseFactory
 
 
 class LossFunction(ABC):
@@ -56,7 +57,7 @@ class CrossEntropy(LossFunction):
 
         epsilon = 1e-8
 
-        return np.mean(np.sum(y * np.log(x + epsilon)))
+        return - np.mean(np.sum(y * np.log(x + epsilon)))
 
     @staticmethod
     def compute_derivative(x: NDArray[Number], y: NDArray[Number]) -> NDArray[Number]:
@@ -68,7 +69,11 @@ class CrossEntropy(LossFunction):
         return np.mean(x - y, axis=0)
 
 
-loss_functions = {
-    "mse": MeanSquaredError,
-    "cross_entropy": CrossEntropy
-}
+class LossFunctionFactory(BaseFactory):
+
+    _instance = "loss function"
+
+    _map = {
+        "mse": MeanSquaredError,
+        "cross_entropy": CrossEntropy
+    }

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from numpy.typing import NDArray
+from .extras.factory import BaseFactory
 from .type_stubs import Number, npNumber
 
 
@@ -9,19 +10,15 @@ class Optimizer(ABC):
 
     name = "base optimizer"
 
-    def __init__(self,
-                 learning_rate: Number,
-                 regularization_rate: Number) -> None:
+    def __init__(self, learning_rate: Number, regularization_rate: Number) -> None:
         self.learning_rate: Number = learning_rate
         self.regularization_rate: Number = regularization_rate
         self.epsilon: Number = 1e-8
         self.momentum_coefficient: Number = 0.5
+        self.data: dict = {}
 
     @abstractmethod
-    def optimize(self,
-                 a: NDArray[npNumber],
-                 b: NDArray[npNumber],
-                 **kwargs) -> NDArray[npNumber]:
+    def optimize(self, a: NDArray[npNumber], b: NDArray[npNumber], value: str) -> NDArray[npNumber]:
         ...
 
 
@@ -37,13 +34,13 @@ class SGD(Optimizer):
     def optimize(self,
                  x: NDArray[npNumber],
                  loss_gradient: NDArray[npNumber],
-                 **kwargs) -> NDArray[npNumber]:
+                 value: str) -> NDArray[npNumber]:
         """
         This method performs a regular gradient descent.
 
         :param x: an array of arrays that is to be optimized (the weight matrix, the bias vector, ...)
         :param loss_gradient: the gradient of the neural network loss function with respect to the w parameter
-        :param kwargs: no use
+        :param value: the name of the parameter to be optimized
         :return: the updated value of the x parameter
         """
 
@@ -62,19 +59,21 @@ class AdaGrad(Optimizer):
     def optimize(self,
                  x: NDArray[npNumber],
                  loss_gradient: NDArray[npNumber],
-                 **kwargs) -> NDArray[npNumber]:
+                 value: str) -> NDArray[npNumber]:
         """
         This method computes an adapted learning rate based on the value of previous gradient values.
 
         :param x: an array of arrays that is to be optimized (the weight matrix, the bias vector, ...)
         :param loss_gradient: the gradient of the neural network loss function with respect to the w parameter
-        :param kwargs:
-        - accumulated_gradients: an array the same shape as loss_gradient containing squared gradients from previous
-        time steps
+        :param value: the name of the value to be optimized
         :return: the updated value of the x parameter
         """
 
-        accumulated_gradients = kwargs.get("accumulated_gradients")
+        accumulated_gradients = self.data.get(value, np.zeros(loss_gradient.shape))
+
+        accumulated_gradients += loss_gradient ** 2
+
+        self.data[value] = accumulated_gradients
 
         adjusted_learning_rate = self.learning_rate / np.sqrt(accumulated_gradients + self.epsilon)
 
@@ -93,26 +92,29 @@ class MomentumSGD(Optimizer):
     def optimize(self,
                  x: NDArray[npNumber],
                  loss_gradient: NDArray[npNumber],
-                 **kwargs) -> NDArray[npNumber]:
+                 value: str) -> NDArray[npNumber]:
         """
-        This method computes an adapted learning rate based on the value of previous gradient values.
+        This method performs a gradient descent smoothed by a momentum term.
 
         :param x: an array of arrays that is to be optimized (the weight matrix, the bias vector, ...)
         :param loss_gradient: the gradient of the neural network loss function with respect to the w parameter
-        :param kwargs: accepted keys are:
-        - momentum: a
+        :param value: the name of the value to be optimized
         :return: the updated value of the x parameter
         """
 
-        momentum = kwargs.get("momentum", 0)
+        momentum = self.momentum_coefficient * self.data.get(value, 0) - self.learning_rate * loss_gradient
 
-        momentum = self.momentum_coefficient * momentum - self.learning_rate * loss_gradient
+        self.data[value] = momentum
 
-        return (1 - self.learning_rate * self.regularization_rate) * x + momentum, momentum
+        return (1 - self.learning_rate * self.regularization_rate) * x + momentum
 
 
-optimizers = {
-    SGD.name: SGD,
-    AdaGrad.name: AdaGrad,
-    MomentumSGD.name: MomentumSGD
-}
+class OptimizerFactory(BaseFactory):
+
+    _instance = "optimizer"
+
+    _map = {
+        SGD.name: SGD,
+        AdaGrad.name: AdaGrad,
+        MomentumSGD.name: MomentumSGD
+    }

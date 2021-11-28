@@ -4,7 +4,7 @@ from ..layers import Layer
 from ..type_stubs import Number
 from numpy.typing import NDArray
 from ..optimizers import Optimizer
-from ..layers import ActivationFunction, activation_functions
+from ..layers import ActivationFunction, ActivationFunctionFactory
 
 
 class Dense(Layer):
@@ -29,14 +29,8 @@ class Dense(Layer):
         self.weights_gradient: NDArray[Number] = np.array([])
         self.biases_gradient: NDArray[Number] = np.array([])
 
-        self.weights_gradients_acc: NDArray[Number] = []
-        self.biases_gradients_acc: NDArray[Number] = []
-
-        self.weights_momentum: NDArray[Number] = np.array([])
-        self.biases_momentum: NDArray[Number] = np.array([])
-
-        self.activation_function: ActivationFunction = \
-            activation_functions[kwargs.get("activation function", "sigmoid")]
+        self.activation_function: type(ActivationFunction) = \
+            ActivationFunctionFactory.create(kwargs.get("activation function", "sigmoid"))
 
         self.is_output = kwargs.get("last layer", True)
 
@@ -71,8 +65,6 @@ class Dense(Layer):
         :return: an array containing the error to be propagated deeper in the network
         """
 
-        # start = perf_counter()
-
         if self.is_output and self.activation_function.name == "softmax":
             propagated_error = err_from_next_layer
 
@@ -87,9 +79,12 @@ class Dense(Layer):
         else:
             self.biases_gradient = np.mean(propagated_error, axis=0)
 
-        # print(f"Backward propagation execution time: {(perf_counter() - start)*100:.2f}ms")
-
         return self.weights.T @ propagated_error
+
+    def update_parameters(self, optimizer: Optimizer) -> None:
+
+        self.update_weights(optimizer)
+        self.update_biases(optimizer)
 
     def update_weights(self, optimizer: Optimizer) -> None:
         """
@@ -101,23 +96,7 @@ class Dense(Layer):
 
         # start = perf_counter()
 
-        if optimizer.name == "sgd":
-            self.weights = optimizer.optimize(self.weights, self.weights_gradient)
-
-        if optimizer.name == "adagrad":
-            self.weights_gradients_acc += self.weights_gradient ** 2
-            self.weights = optimizer.optimize(self.weights,
-                                              self.weights_gradient,
-                                              accumulated_gradients=self.weights_gradients_acc)
-
-        if optimizer.name == "momentum_sgd":
-
-            if self.weights_momentum.size == 0:
-                self.weights_momentum = self.weights_gradient
-
-            self.weights, self.weights_momentum = optimizer.optimize(self.weights,
-                                                                     self.weights_gradient,
-                                                                     momentum=self.weights_momentum)
+        self.weights = optimizer.optimize(self.weights, self.weights_gradient, value=f"{self.name}_weights")
 
         # print(f"Weights update execution time: {(perf_counter() - start)*100:.2f}ms")
 
@@ -131,23 +110,8 @@ class Dense(Layer):
         :return: None
         """
 
-        if optimizer.name == "sgd":
-            self.biases = optimizer.optimize(self.biases, self.biases_gradient)
+        self.biases = optimizer.optimize(self.biases, self.biases_gradient, value=f"{self.name}_biases")
 
-        elif optimizer.name == "adagrad":
-            self.biases_gradients_acc += self.biases_gradient ** 2
-            self.biases = optimizer.optimize(self.biases,
-                                             self.biases_gradient,
-                                             accumulated_gradients=self.biases_gradients_acc)
-
-        if optimizer.name == "momentum_sgd":
-
-            if self.biases_momentum.size == 0:
-                self.biases_momentum = self.biases_gradient
-
-            self.biases, self.biases_momentum = optimizer.optimize(self.biases,
-                                                                   self.biases_gradient,
-                                                                   momentum=self.biases_momentum)
         self.biases_gradient = np.zeros(self.biases.shape)
 
     def init_architecture(self, input_neurons: int) -> None:
@@ -169,9 +133,6 @@ class Dense(Layer):
 
         self.weights_gradient = np.zeros(self.weights.shape)
         self.biases_gradient = np.zeros(self.biases.shape)
-
-        self.weights_gradients_acc = np.zeros(self.weights_gradient.shape)
-        self.biases_gradients_acc = np.zeros(self.biases_gradient.shape)
 
     def init_weights(self) -> None:
         """

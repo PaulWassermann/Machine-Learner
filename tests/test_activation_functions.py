@@ -9,6 +9,7 @@ def test_relu():
     x_2d_array = np.array([[8], [-1]])
     x_3d_array = np.array([[[-2], [3]], [[4], [-5]]])
     x_random = sample((10, 784, 1)) * 2 - 1
+
     y_2d_array = ReLU.compute(x_2d_array)
     y_3d_array = ReLU.compute(x_3d_array)
     yp_2d_array = ReLU.compute_derivative(x_2d_array)
@@ -26,6 +27,7 @@ def test_sigmoid():
     x_2d_array = np.array([[10e8], [0]])
     x_3d_array = np.array([[[-10e8], [0]]])
     x_random = sample((10, 784, 1)) * 2 - 1
+
     y_2d_array = Sigmoid.compute(x_2d_array)
     y_3d_array = Sigmoid.compute(x_3d_array)
     yp_2d_array = Sigmoid.compute_derivative(x_2d_array)
@@ -43,6 +45,7 @@ def test_hyperbolic_tangent():
     x_2d_array = np.array([[10e8], [0]])
     x_3d_array = np.array([[[-10e8], [0]]])
     x_random = sample((10, 784, 1)) * 2 - 1
+
     y_2d_array = HyperbolicTangent.compute(x_2d_array)
     y_3d_array = HyperbolicTangent.compute(x_3d_array)
     yp_2d_array = HyperbolicTangent.compute_derivative(x_2d_array)
@@ -60,6 +63,7 @@ def test_softmax():
     x_2d_array = np.array([[1], [1]])
     x_3d_array = np.array([[[0], [0]], [[1], [1]]])
     x_random = sample((10, 784, 1)) * 2 - 1
+
     y_2d_array = Softmax.compute(x_2d_array)
     y_3d_array = Softmax.compute(x_3d_array)
     y_random = Softmax.compute(x_random)

@@ -3,6 +3,7 @@ from typing import Union
 from scipy.special import expit
 from numpy.typing import NDArray
 from abc import ABC, abstractmethod
+from ..extras.factory import BaseFactory
 from ..type_stubs import Number, npNumber
 
 
@@ -21,7 +22,7 @@ class ActivationFunction(ABC):
         ...
 
 
-class ReLU:
+class ReLU(ActivationFunction):
 
     name = "relu"
 
@@ -34,7 +35,7 @@ class ReLU:
         return np.heaviside(x, np.zeros(x.shape))
 
 
-class Sigmoid:
+class Sigmoid(ActivationFunction):
 
     name = "sigmoid"
 
@@ -47,7 +48,7 @@ class Sigmoid:
         return Sigmoid.compute(x) * (1 - Sigmoid.compute(x))
 
 
-class HyperbolicTangent:
+class HyperbolicTangent(ActivationFunction):
 
     name = "hyperbolic tangent"
 
@@ -60,7 +61,7 @@ class HyperbolicTangent:
         return 1 - np.square(np.tanh(x))
 
 
-class Softmax:
+class Softmax(ActivationFunction):
 
     name = "softmax"
 
@@ -83,9 +84,13 @@ class Softmax:
         return np.apply_along_axis(lambda x_i: (np.diagflat(x_i) - x_i * x_i.T), axis=0, arr=Softmax.compute(x))
 
 
-activation_functions = {
-    ReLU.name: ReLU,
-    Sigmoid.name: Sigmoid,
-    HyperbolicTangent.name: HyperbolicTangent,
-    Softmax.name: Softmax
-}
+class ActivationFunctionFactory(BaseFactory):
+
+    _instance = "activation function"
+
+    _map = {
+        ReLU.name: ReLU,
+        Sigmoid.name: Sigmoid,
+        HyperbolicTangent.name: HyperbolicTangent,
+        Softmax.name: Softmax
+    }

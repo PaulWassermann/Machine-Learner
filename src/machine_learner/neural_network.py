@@ -1,5 +1,5 @@
-from machine_learner.loss_functions import loss_functions
-from machine_learner.optimizers import optimizers
+from machine_learner.loss_functions import LossFunctionFactory
+from machine_learner.optimizers import OptimizerFactory
 from machine_learner.layers.dense import Dense
 
 import numpy as np
@@ -26,10 +26,10 @@ class NeuralNetwork:
         self.classes: dict[int, str] = {}
 
         # ----- HYPER-PARAMETERS -----
-        self.batch_size: int = 64
+        self.batch_size: int = 32
         self.number_of_epochs: int = 5
-        self.optimizer = optimizers[optimizer]()
-        self.loss_function = loss_functions[loss_function]
+        self.optimizer = OptimizerFactory.create(optimizer)
+        self.loss_function = LossFunctionFactory.create(loss_function)
 
         self.initialize_architecture(architecture)
 
@@ -71,7 +71,6 @@ class NeuralNetwork:
 
         # If no validation dataset is passed as an argument, we make one from the training dataset
         if validation_data is None:
-            print("Aïe")
             validation_data_size = x.shape[0] // int(1 / validation_split)
             validation_data = x[:validation_data_size]
             validation_data_labels = y[:validation_data_size]
@@ -80,7 +79,10 @@ class NeuralNetwork:
 
         # Sets the learning of the optimizer if passed as an argument
         if learning_rate is not None:
-            self.optimizer.learning_rate = learning_rate
+            optimizer = self.optimizer(learning_rate=learning_rate)
+
+        else:
+            optimizer = self.optimizer()
 
         # Set the number of neurons in the output layer depending on the shape of the labels included in y parameter
         if self.layers[-1].output_neurons != y.shape[1]:
@@ -122,7 +124,7 @@ class NeuralNetwork:
         # Looping over the training data set
         for epoch in range(self.number_of_epochs):
 
-            print(f"\n--- Epoch: {epoch + 1} / {self.number_of_epochs}---\n")
+            print(f"\n--- Epoch: {epoch + 1} / {self.number_of_epochs} ---\n")
             print("Progress:")
 
             # Generate new batches for this epoch
@@ -144,7 +146,7 @@ class NeuralNetwork:
                 self.backpropagation(y_estimated, y_batch)
 
                 # Finally, we update the weights and biases of the network
-                self.update_parameters()
+                self.update_parameters(optimizer)
 
                 if len(timings) == 1000:
                     timings.pop(0)
@@ -238,7 +240,7 @@ class NeuralNetwork:
         for layer in self.layers[::-1]:
             error_to_propagate = layer.propagate_backwards(error_to_propagate)
 
-    def update_parameters(self) -> None:
+    def update_parameters(self, optimizer) -> None:
         """
         This method performs the gradient descent algorithm by calling the weights and biases update method of each
         layer.
@@ -247,8 +249,7 @@ class NeuralNetwork:
         """
 
         for layer in self.layers:
-            layer.update_weights(self.optimizer)
-            layer.update_biases(self.optimizer)
+            layer.update_parameters(optimizer)
 
     def evaluate(self, x: NDArray[npNumber], y: NDArray[npNumber]) -> float:
         """

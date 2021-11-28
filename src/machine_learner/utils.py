@@ -8,11 +8,12 @@ from .type_stubs import npNumber, NeuralNetwork
 
 def normalize(x: NDArray[npNumber]) -> NDArray[npNumber]:
     """
-    This function returns an array with values between 0 and 1.
+    This function returns an array with values between 0 and 1, assuming x only contains positive values.
 
     :param x: an array which values are to be normalized
     :return: an array with values between 0 and 1
     """
+
     return x / x.max()
 
 
@@ -23,6 +24,9 @@ def one_hot_encoding(x: NDArray[np.int8]) -> NDArray[np.int8]:
     :param x: an array of integers
     :return: an array of one-hot encoded arrays
     """
+
+    # Flatten the array in case it has two dimensions
+    x = x.ravel()
 
     one_hot_encoded = np.zeros((x.size, x.max() + 1))
     one_hot_encoded[np.arange(x.size), x] = 1

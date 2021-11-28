@@ -1,5 +1,5 @@
 from machine_learner import NeuralNetwork
-from machine_learner.data.data_loader import load_mnist_data
+from machine_learner.data.data_loader import load_mnist_data, load_mnist_fashion_data
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,27 +21,33 @@ architecture = {
             "output neurons": 128,
             "activation function": "relu"
         },
+        {
+            "type": "dense",
+            "output neurons": 128,
+            "activation function": "relu"
+        },
     ],
 
     "classes": classes
 }
 
 # Creates the NeuralNetwork instance
-neural_network = NeuralNetwork(architecture=architecture, optimizer="adagrad", loss_function="cross_entropy")
+neural_network = NeuralNetwork(architecture=architecture, optimizer="momentum_sgd", loss_function="cross_entropy")
 
 # Train the network
 neural_network.train(training_examples,
                      training_labels,
-                     validation_data=validation_examples[:1000],
-                     validation_data_labels=validation_labels[:1000],
+                     # validation_data=validation_examples[:1000],
+                     # validation_data_labels=validation_labels[:1000],
                      learning_rate=0.01,
-                     epochs=2,
-                     batch_size=5)
+                     epochs=5,
+                     batch_size=32,
+                     plot_session=False)
 
 print(f"\nAccuracy on test dataset: {neural_network.evaluate(test_examples, test_labels) * 100:.2f}%\n")
 
 # This line saves the neural network as a binary file, at the indicated path
-neural_network.save(path="my_model")
+# neural_network.save(path="my_model")
 
 # This line loads a neural network saved as a binary file, at the indicated path
 # neural_network = load_network("my_model")
